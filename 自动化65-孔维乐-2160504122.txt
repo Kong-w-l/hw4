@@ -1,0 +1,105 @@
+%任务一
+clear all
+clc
+im1=imread('test2.tif');
+subplot(1,3,1);
+imshow(im1);
+title('test2.tif的原图像');
+subplot(1,3,2);
+G=fspecial('gaussian',[3,3],1.5);
+G_im1=imfilter(im1,G,'replicate');
+imshow(G_im1);
+title('高斯滤波图像（size=3）');
+subplot(1,3,3);
+M_im1=medfilt2(im1,[3,3]);
+imshow(M_im1);
+title('中值滤波图像（size=3）');
+
+%任务二
+clear all;
+clc;
+Im = imread('test1.pgm');
+I = double(Im);%convert unit8 to double 
+[m, n] = size(I);
+size = 7;
+conv = zeros(size,size);
+segma = 1.5;
+sum = 0;
+center  = 3;
+for i=1:size	
+    for j=1:size		%%利用高斯函数计算模板的各个参数		
+        temp = exp ( -((i-center)*(i-center) + (j-center)*(j-center)) / 2*segma*segma );		
+        conv(i,j) = temp / (2*3.14*segma*segma);		
+        sum =sum +  conv(i,j);	
+    end
+end
+conv = conv ./ sum;
+for x=1:m	
+    for y= 1:n	    
+        sum =0;		%%卷积：模板与图像对应部分相乘再累加		
+        for i=1:size			
+            for j=1:size				
+                if( ( (x-center+i) > 0 && (x-center+i) <= m ) && ((y-center+j)>0 && (y-center+j)<=n) )					
+                    sum = sum + conv(i,j) * I(x-center+i, y-center+j);				
+                end
+            end
+        end		%%替换掉原像素		
+        I(x,y) = sum;	
+    end
+end
+subplot(1,3,1);
+imshow(Im);
+title(sprintf('原图size=%d,seg=%.1f',size,segma));
+subplot(1,3,2);
+imshow(I,[]);
+title('自制高斯滤波图像');
+G=fspecial('gaussian',[size,size],segma);
+G_im1=imfilter(Im,G,'replicate');
+subplot(1,3,3);
+imshow(G_im1);
+title('matlab高斯滤波图像');
+
+%任务三（unsharp masking）
+clear all
+clc
+Im=imread('test4 copy.bmp');
+I=Im;
+[m,n]=size(Im);
+T=zeros(m+2,n+2);
+T(2:m+1,2:n+1)=Im;
+T(:,1)=T(:,2);
+T(:,n+2)=T(:,n+1);
+T(1,:)=T(2,:);
+T(m+2,:)=T(m+1,:);
+A=1;
+for i=2:m+1
+    for j=2:n+1
+        Im(i-1,j-1)=T(i,j)*A-(T(i,j)*(-8)+T(i,j-1)+T(i,j+1)+T(i-1,j-1)+T(i-1,j)+T(i-1,j+1)+T(i+1,j-1)+T(i+1,j)+T(i+1,j+1));
+    end
+end
+subplot(1,2,1);
+imshow(I);
+title('原图像');
+subplot(1,2,2);
+imshow(Im);
+title('反锐化掩膜图像');
+
+%任务三（边缘检测）
+clear all
+clc
+Im=imread('test3_corrupt.pgm');
+S_Im=edge(Im,'sobel');
+L_Im=edge(Im,'log');
+C_Im=edge(Im,'canny');
+subplot(2,2,1);
+imshow(Im);
+title('原图像');
+subplot(2,2,2);
+imshow(S_Im);
+title('Sobel算子');
+subplot(2,2,3);
+imshow(L_Im);
+title('Laplace算子');
+subplot(2,2,4);
+imshow(C_Im);
+title('Canny算子');
